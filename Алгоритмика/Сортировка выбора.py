@@ -6,7 +6,7 @@ def choice_sort(dataset):
         m = dataset[a]
         p = a
         for b in range(a + 1, N):
-            if m > dataset[b]:
+            if m < dataset[b]:
                 m = dataset[b]
                 p = b
         if p != a:
