@@ -1,4 +1,6 @@
-data = [8, 7, 87, 87, 87, 87, 87, 85, 64, 534, 78, 87, 87, 87]
+import random
+import time
+
 
 def bingo(data):
     # Первый проход
@@ -28,5 +30,11 @@ def bingo(data):
             max -= 1
     return data
 
-print(bingo(data))
+data = [random.randint(1, 30000) for i in range(30000)]
+data = list(set(data))
+
+start = time.time()
+data = bingo(data)
+print(time.time()-start)
+print(data)
 

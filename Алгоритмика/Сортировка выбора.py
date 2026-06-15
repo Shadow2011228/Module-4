@@ -1,4 +1,6 @@
-dataset = [-868, 934, 661, 541, 709, -277, 142, 493, 286, 733, -229, 79]
+import random
+import time
+
 
 def choice_sort(dataset):
     N = len(dataset)
@@ -15,4 +17,10 @@ def choice_sort(dataset):
             dataset[p] = t
     return dataset
 
-print(choice_sort(dataset))
+data = [random.randint(1, 30000) for i in range(30000)]
+# data = list(set(data))
+
+start = time.time()
+data = choice_sort(data)
+print(time.time()-start)
+print(data)

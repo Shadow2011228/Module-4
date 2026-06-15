@@ -13,7 +13,8 @@ def pancake(data):
                 data[:size] = reversed(data[:size])
     return data
 
-data = [random.randint(1, 3000) for i in range(30000)]
+data = [random.randint(1, 30000) for i in range(30000)]
+# data = list(set(data))
 
 start = time.time()
 data = pancake(data)
