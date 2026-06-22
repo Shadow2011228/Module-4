@@ -31,7 +31,7 @@ def bingo(data):
     return data
 
 data = [random.randint(1, 30000) for i in range(30000)]
-data = list(set(data))
+# data = list(set(data))
 
 start = time.time()
 data = bingo(data)
