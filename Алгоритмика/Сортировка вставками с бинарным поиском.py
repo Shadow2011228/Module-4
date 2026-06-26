@@ -26,5 +26,5 @@ data = list(set(data))
 
 start = time.time()
 data = insertion_binary(data)
-print(time.time()-start)
 print(data)
+print(time.time()-start)

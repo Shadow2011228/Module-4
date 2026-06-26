@@ -30,10 +30,10 @@ def split_and_merge_list(a):
 
 
 
-data = [random.randint(1, 30000) for i in range(30000)]
+data = [random.randint(1, 30000) for i in range(3000000)]
 data = list(set(data))
 
 start = time.time()
 data = split_and_merge_list(data)
-print(time.time()-start)
 print(data)
+print(time.time()-start)
