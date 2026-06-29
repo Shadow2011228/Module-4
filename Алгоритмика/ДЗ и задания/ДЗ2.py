@@ -1,4 +1,6 @@
 import random
+import time
+
 
 
 def play_binary_search_game():
@@ -24,6 +26,7 @@ def play_binary_search_game():
         # Компьютер предполагает число (середина диапазона)
         guess = (low + high) // 2
         attempts += 1
+        history.append(guess)
 
         print(f"\nПопытка {attempts}: Компьютер называет число {guess}.")
         print(f"Текущий диапазон: [{low}, {high}]")
@@ -39,6 +42,8 @@ def play_binary_search_game():
         if user_input == "угадал":
             guessed = True
             print(f"\n🎉 Ура! Компьютер угадал ваше число {guess} за {attempts} попыток!")
+            print(history)
+
         elif user_input == "больше":
             low = guess + 1
             if low > high:
@@ -56,9 +61,28 @@ def play_binary_search_game():
     print("\nСпасибо за игру!")
 
 
+def choice_sort(dataset):
+    N = len(dataset)
+    for a in range(N - 1):
+        m = dataset[a]
+        p = a
+        for b in range(a + 1, N):
+            if m > dataset[b]:
+                m = dataset[b]
+                p = b
+        if p != a:
+            t = dataset[a]
+            dataset[a] = dataset[p]
+            dataset[p] = t
+    return dataset
+
 def main():
     while True:
+        global history
         play_binary_search_game()
+        start = time.time()
+        history = choice_sort(history)
+        print(history)
         play_again = input("\nХотите сыграть ещё раз? (да / нет): ").strip().lower()
         if play_again != "да":
             print("До свидания! 👋")
@@ -67,4 +91,6 @@ def main():
 
 
 if __name__ == "__main__":
+    history = []
     main()
+
