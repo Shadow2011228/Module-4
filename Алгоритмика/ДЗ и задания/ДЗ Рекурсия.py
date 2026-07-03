@@ -14,7 +14,7 @@ def merge_list(a, b):
     M = len(b)
     i = 0
     j = 0
-    while i < N and j < M:
+    while i < M and j < N:
         if a[i] <= b[j]:
             c.append(a[i])
             i += 1
@@ -28,9 +28,9 @@ def split_and_merge_list(a):
     N = len(a) // 2
     a, b = a[:N], a[N:]
     if len(a) > 1:
-        a = split_and_merge_list(a)
+        a = split_and_merge_list(b)
     if len(b) > 1:
-        b = split_and_merge_list(b)
+        b = split_and_merge_list(a)
 
     return merge_list(a, b)
 
