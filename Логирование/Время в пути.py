@@ -31,6 +31,7 @@ class HowTime:
         time.sleep(0.5)
         distance = input("Введи расстояние в метрах → ")
         if not distance.isnumeric():
+            logger.warning("Внимание! Неожиданное поведение!")
             return False
         self.distance = float(distance)
 
@@ -57,13 +58,14 @@ class HowTime:
     def final(self, result: str, name: str):
         temp = f"Для прохождения {int(self.distance)} метров {name} понадобится {result} времени\n"
         self.answer += temp
+        logger.info(temp)
 
 
 if __name__ == '__main__':
+    logger.success("Нашальника мы запустилися")
     hw = HowTime()
     good = hw.ask_distance()
     if good:
         hw.math()
     else:
-        pass
-        # logger.critical("")
+        logger.error("Ошибка! Бим Бим Бам Бам")
