@@ -1,28 +1,33 @@
-import telebot
-from telebot import types
-from loguru import logger
-import db
+import telebot                     # Импорт библиотеки для работы с Telegram Bot API
+from telebot import types          # Импорт типов данных (клавиатуры, кнопки и т.д.)
+from loguru import logger          # Импорт библиотеки для удобного логирования (вывод информации в консоль)
+import db                          # Импорт нашего модуля db.py (работа с базой данных)
 
-
+# Создание экземпляра бота с использованием токена (уникальный ключ для доступа к боту)
 bot = telebot.TeleBot("8598431910:AAG8zvIUEk7E0N3v1eeOV3kKCtQ8FN6fJM4")
-logger.success("Экземпляр бота создан")
-m = types.Message
+logger.success("Экземпляр бота создан")  # Логируем успешное создание бота
 
+m = types.Message # Создаём псевдоним для класса Message (используется для аннотации типов)
+
+# Декоратор, который регистрирует функцию-обработчик команды /start
 @bot.message_handler(['start'])
-def start(msg: m):
-    logger.info(f"Пользователь {msg.chat.id} нажал /start")
-    bot.send_message(msg.chat.id, "Пройти опрос — /lets_go")
+def start(msg: m): # Функция принимает сообщение от пользователя
+    logger.info(f"Пользователь {msg.chat.id} нажал /start")  # Логируем действие пользователя по его ID
+    bot.send_message(msg.chat.id, "Пройти опрос — /lets_go")  # Отправляем ответ пользователю
 
-
+# Декоратор, который регистрирует функцию-обработчик команды /lets_go
 @bot.message_handler(['lets_go'])
-def quest(msg: m):
+def quest(msg: m): # Функция для обработки команды начала опроса
+    # Обращаемся к базе данных: ищем запись в таблице Manage с id=1
     data = db.db.s.get(db.Manage, 1)
-    if data:
-        logger.debug(f"Прочитали вопросы из manage: {data.questions}")
-        data = ", ".join(data.questions)
-        bot.send_message(msg.chat.id, "Вопросы: + " + data)
-    else:
-        logger.warning(f"Юзер {msg.chat.id} вызвал вопросы, но вопросов в таблице нет")
-        bot.send_message(msg.chat.id, "Сейчас вопросов нет.")
+    if data: # Если запись найдена (существует)
+        logger.debug(f"Прочитали вопросы из manage: {data.questions}")  # Логируем вопросы
+        data = ", ".join(data.questions)  # Преобразуем список вопросов в строку через запятую
+        bot.send_message(msg.chat.id, "Вопросы: + " + data)  # Отправляем вопросы пользователю
+    else: # Если запись не найдена
+        logger.warning(f"Юзер {msg.chat.id} вызвал вопросы, но вопросов в таблице нет")  # Предупреждение в лог
+        bot.send_message(msg.chat.id, "Сейчас вопросов нет.")  # Уведомляем пользователя
 
-bot.infinity_polling()
+
+
+bot.infinity_polling() # Запускаем бота в режиме бесконечного опроса (постоянно ждём сообщения)
