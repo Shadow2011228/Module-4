@@ -1,58 +1,50 @@
-from sqlalchemy import create_engine        # Функция для создания движка подключения к БД
-from sqlalchemy.orm import sessionmaker, declarative_base  # Для создания сессий и базового класса моделей
+from sqlalchemy import create_engine        # Движок подключения к БД
+from sqlalchemy.orm import sessionmaker, declarative_base  # Сессии и базовый класс моделей
 from sqlalchemy import Column, Integer, String, Boolean, PickleType  # Типы колонок
 from loguru import logger                  # Логирование
 
-# Класс для работы с базой данных
+# Класс для работы с БД
 class DB:
-    @logger.catch # Декоратор, перехватывающий ошибки и логирующий их
+    @logger.catch  # Перехват ошибок
     def __init__(self, DATABASE_FILE):
-        # Создаём движок SQLite, указываем файл базы данных
-        self.engine = create_engine(f"sqlite:///{DATABASE_FILE}")
+        self.engine = create_engine(f"sqlite:///{DATABASE_FILE}")  # Движок SQLite
         Session = sessionmaker(bind=self.engine)  # Фабрика сессий
-        self.Base = declarative_base()      # Базовый класс для объявления моделей
-        self.s = Session()                  # Создаём сессию для работы с БД
+        self.Base = declarative_base()      # Базовый класс моделей
+        self.s = Session()                  # Сессия для работы
         logger.success(f"База данных активирована по адресу → {DATABASE_FILE}")
 
     @logger.catch
     def setup(self):
-        # Создаёт все таблицы, описанные в моделях, если их нет
-        self.Base.metadata.create_all(self.engine)
+        self.Base.metadata.create_all(self.engine)  # Создание таблиц
         logger.success("Таблицы БД настроены")
 
     @logger.catch
     def merge(self, data):
-        # Добавляет или обновляет объект в сессии (слияние)
-        self.s.merge(data)
-        logger.info(
-            f"В соединение был добавлен объект таблицы "
-            f"{data.__class__.__tablename__}, "
-            f"id={data.id if data.id else data}"
-        )
+        self.s.merge(data)  # Добавление/обновление объекта
+        logger.info(f"Добавлен объект таблицы {data.__class__.__tablename__}, id={data.id}")
 
     @logger.catch
     def commit(self):
-        # Фиксирует изменения в базе данных (сохраняет)
-        self.s.commit()
+        self.s.commit()  # Сохранение изменений
         logger.info("Произошёл коммит в БД")
 
-# Создаём глобальный экземпляр БД с именем файла "db.db"
+# Глобальный экземпляр БД
 db = DB("db.db")
 
-# Модель таблицы "users" — хранит данные пользователей
+# Модель таблицы users
 class Users(db.Base):
-    __tablename__ = "users"                # Имя таблицы в БД
-    id = Column(Integer, primary_key=True) # ID пользователя (Telegram ID)
-    name = Column(String)                  # Имя пользователя
-    answers = Column(PickleType)           # Ответы на вопросы (сериализованный список/словарь)
-    is_admin = Column(Boolean, default=False)  # Флаг администратора
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True)  # ID пользователя
+    name = Column(String)                   # Имя
+    answers = Column(PickleType)            # Ответы (сериализованные)
+    is_admin = Column(Boolean, default=False)  # Администратор
 
-# Модель таблицы "manage" — хранит настройки и вопросы опроса
+# Модель таблицы manage
 class Manage(db.Base):
-    __tablename__ = "manage"               # Имя таблицы
-    id = Column(Integer, primary_key=True, default=1)  # ID записи (всегда 1 для одной записи)
-    short_name = Column(String)            # Короткое название опроса
-    questions = Column(PickleType)         # Список вопросов (сериализованный)
+    __tablename__ = "manage"
+    id = Column(Integer, primary_key=True, default=1)  # ID записи
+    short_name = Column(String)             # Название опроса
+    questions = Column(PickleType)          # Список вопросов
 
-# Выполняем настройку таблиц (создаём, если их нет)
+# Создание таблиц
 db.setup()
