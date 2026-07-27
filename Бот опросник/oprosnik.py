@@ -1,8 +1,14 @@
+import random
+import time
+
 import telebot                     # Импорт библиотеки для работы с Telegram Bot API
 from telebot import types          # Импорт типов данных (клавиатуры, кнопки и т.д.)
 from loguru import logger          # Импорт библиотеки для удобного логирования (вывод информации в консоль)
 import db                          # Импорт нашего модуля db.py (работа с базой данных)
 
+logger.remove()
+logger.add("log.log", level="DEBUG", compression='zip', rotation='1 hour', retention='1 week')
+logger.add("warn.log", level="WARNING", delay=True, rotation='1 hour')
 # Создание экземпляра бота с использованием токена (уникальный ключ для доступа к боту)
 bot = telebot.TeleBot("8598431910:AAG8zvIUEk7E0N3v1eeOV3kKCtQ8FN6fJM4")
 logger.success("Экземпляр бота создан")  # Логируем успешное создание бота
@@ -23,16 +29,71 @@ def start(msg: m): # Функция принимает сообщение от �
 
 # Декоратор, который регистрирует функцию-обработчик команды /lets_go
 @bot.message_handler(['lets_go'])
-def quest(msg: m): # Функция для обработки команды начала опроса
-    # Обращаемся к базе данных: ищем запись в таблице Manage с id=1
-    data = db.db.s.get(db.Manage, 1)
-    if data: # Если запись найдена (существует)
-        logger.debug(f"Прочитали вопросы из manage: {data.questions}")  # Логируем вопросы
-        data = ", ".join(data.questions)  # Преобразуем список вопросов в строку через запятую
-        bot.send_message(msg.chat.id, "Вопросы: + " + data)  # Отправляем вопросы пользователю
-    else: # Если запись не найдена
-        logger.warning(f"Юзер {msg.chat.id} вызвал вопросы, но вопросов в таблице нет")  # Предупреждение в лог
-        bot.send_message(msg.chat.id, "Сейчас вопросов нет.")  # Уведомляем пользователя
+def quest(msg: m):
+    questions = check_questions()
+    ids = []
+    keyboard = types.ReplyKeyboardMarkup(True, True)
+    for q in questions:
+        ids.append(q[0])
+        keyboard.row(str(q[0]))
+        text = "Выберите опрос: \n"
+        for q in questions:
+            text += telebot.formatting.hbold(f"Номер {q[0]}. {q[1]} \n")
+            bot.send_message(msg.chat.id, text, parse_mode="HTML", reply_markup=keyboard)
+
+    bot.register_next_step_handler(msg, first_question, ids)
+
+def first_question(msg: m, ids: list):
+    if not msg.text.isnumeric():
+        logger.warning(f"Юзер {msg.chat.id} ввёл неверный номер списка")
+        bot.send_message(msg.chat.id, "Введён неправильный номер списка")
+        start(msg)
+        return
+    if int(msg.text) not in ids:
+        logger.warning(f"Юзер {msg.chat.id} ввёл неверный номер списка")
+        bot.send_message(msg.chat.id, "Введён неправильный номер списка")
+        start(msg)
+        return
+
+    temp[msg.chat.id] = {
+        'list': int(msg.text),
+        'queue': 0,
+        'answers': []
+    }
+    logger.info(f"Клиент {msg.chat.id} инициализировал переменную - {temp[msg.chat.id]}")
+    questions = db.db.s.get(db.Manage, int(msg.text)).questions
+    bot.send_message(msg.chat.id, questions[0])
+    bot.register_next_step_handler(msg, next_question, questions)
+
+@logger.catch
+def next_question(msg: m, questions):
+    global temp
+    temp[msg.chat.id]['answers'].append(msg.text)
+    logger.info(f"Юзер {msg.chat.id} ответил на вопрос №{temp[msg.chat.id]['queue']} "
+                f"списка №{temp[msg.chat.id]['list']}")
+
+    if temp[msg.chat.id]['queue'] == len(questions) - 1:
+        bot.send_message(msg.chat.id, "Спасибо за ответы!")
+        logger.success(f"Юзер {msg.chat.id} завершил опрос!")
+        save_client(msg)
+        return
+
+    temp[msg.chat.id]['queue'] += 1
+    question = questions[temp[msg.chat.id]['queue']]
+    bot.send_message(msg.chat.id, question)
+    bot.register_next_step_handler(msg, next_question, questions)
+
+def save_client(msg: m):
+    user = db.db.s.get(db.Users, msg.chat.id)
+    if user.answers is None:
+        answers = [temp[msg.chat.id]['answers']]
+    else:
+        answers = user.answers
+        answers.append(temp[msg.chat.id]['answers'])
+    db.db.s.query(db.Users).filter_by(id=msg.chat.id).update({"answers": answers})
+    db.db.commit()
+
+
 
 # Декоратор, который регистрирует функцию-обработчик команды /write
 @bot.message_handler(['write'])
@@ -97,7 +158,7 @@ def admin_panel_handler(msg: m):
         delete_questions(msg)
     # Проверяем, начинается ли текст с "Добавить"
     elif msg.text.startswith("Добавить"):
-        pass  # Пока ничего не делаем (заглушка)
+        ask_question(msg)
     else:
         # Если текст не соответствует ни одной кнопке - возвращаем в панель
         admin_panel(msg)
@@ -188,6 +249,7 @@ def delete(msg: m, num: int):
 def ask_question(msg: m):
     global temp
     temp[msg.chat.id] = []
+    logger.success(f"Админ {msg.chat.id} добавил новый опрос")
     bot.send_message(msg.chat.id, "Введи первый вопрос:")
     bot.register_next_step_handler(msg, ask_next_question)
 
@@ -198,5 +260,23 @@ def ask_next_question(msg: m):
         temp[msg.chat.id].append(msg.text)
         bot.send_message(msg.chat.id, "Введи следующий вопрос:")
         bot.register_next_step_handler(msg, ask_next_question)
+    else:
+        bot.send_message(msg.chat.id, "Напишите краткое имя опроса")
+        bot.register_next_step_handler(msg, obrabochik)
+
+
+@logger.catch
+def obrabochik(msg: m):
+    num = len(check_questions())+1
+    data = db.Manage(id=num, short_name=msg.text, questions=temp[msg.chat.id])
+    db.db.merge(data)  # Добавляем/обновляем объект в сессии БД
+    db.db.commit()  # Сохраняем изменения в БД (фиксируем транзакцию)
+    logger.success(f"Админ {msg.chat.id} записал новый список №{num}")
+    bot.send_message(msg.chat.id, "Список успешно записан")
+    time.sleep(2)
+    admin_panel(msg)
+
+
+
 
 bot.infinity_polling() # Запускаем бота в режиме бесконечного опроса (постоянно ждём сообщения)
