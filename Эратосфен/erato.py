@@ -20,8 +20,8 @@ def eratosthenes(N):
     # Избавляемся от всех нулей в списке
     primes = [i for i in primes if i != 0]
     return primes
-
-print(eratosthenes(10))
+#
+# print(eratosthenes(10))
 
 
 
