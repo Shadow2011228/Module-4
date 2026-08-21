@@ -1,6 +1,5 @@
 import random
 
-
 def randomer():
     return int(random.randint(1, 1000))
 

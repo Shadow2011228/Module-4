@@ -1,13 +1,13 @@
 import random
 import time
-
+from numba import njit
 
 def fank1(N, nums=[]):
     if len(nums) < N:
         nums.append(random.randint(0,30))
         fank1(N, nums)
     return nums
-
+# @njit
 def merge_list(a, b):
     c = []
     N = len(a)
@@ -23,7 +23,7 @@ def merge_list(a, b):
             j += 1
     c += a[i:] + b[j:]
     return c
-
+# @njit
 def split_and_merge_list(a):
     N = len(a) // 2
     a, b = a[:N], a[N:]
@@ -34,7 +34,7 @@ def split_and_merge_list(a):
 
     return merge_list(a, b)
 
-print(fank1(50))
+print(fank1(10))
 
 start = time.time()
 nums = split_and_merge_list(fank1(50))

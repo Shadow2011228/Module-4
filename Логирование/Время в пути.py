@@ -3,7 +3,6 @@ from loguru import logger
 
 
 
-
 class HowTime:
     speeds = {
         "Рыбе": 2.5,

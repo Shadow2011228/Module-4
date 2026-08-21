@@ -2,7 +2,7 @@ import time
 import random
 from numba import njit
 
-@njit
+
 def fibonacci(n):
     if n == 0:
         return 0

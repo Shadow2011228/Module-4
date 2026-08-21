@@ -2,7 +2,6 @@
 import random
 import time
 
-
 def pancake(data):
     if len(data) > 1:
         for size in range(len(data), 1, -1):

@@ -1,7 +1,6 @@
 import random
 import time
 
-
 def bubble(data):
     N = len(data)
     for i in range(0,N-1):
