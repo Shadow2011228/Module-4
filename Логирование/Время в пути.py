@@ -1,6 +1,11 @@
 import time
 from loguru import logger
+from logtail import LogtailHandler
 
+
+logtail_handler = LogtailHandler(source_token='R2hGT9bADiRshufs7ggome1z')
+logger.add("log.log", level='DEBUG', compression='zip', rotation='1 hour', retention='1 week')
+logger.add(logtail_handler, level='DEBUG')
 
 
 class HowTime:

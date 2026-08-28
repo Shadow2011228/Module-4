@@ -1,24 +1,29 @@
 import random
 import time
 
-import telebot                     # Импорт библиотеки для работы с Telegram Bot API
-from telebot import types          # Импорт типов данных (клавиатуры, кнопки и т.д.)
-from loguru import logger          # Импорт библиотеки для удобного логирования (вывод информации в консоль)
-import db                          # Импорт нашего модуля db.py (работа с базой данных)
+import telebot  # Импорт библиотеки для работы с Telegram Bot API
+from telebot import types  # Импорт типов данных (клавиатуры, кнопки и т.д.)
+from loguru import logger  # Импорт библиотеки для удобного логирования (вывод информации в консоль)
+import db  # Импорт нашего модуля db.py (работа с базой данных)
+from logtail import LogtailHandler
 
-logger.remove()
+
+logtail_handler = LogtailHandler(source_token='UHFayoDqfLHhJUYoK5AbJrJX')
+
 logger.add("log.log", level="DEBUG", compression='zip', rotation='1 hour', retention='1 week')
 logger.add("warn.log", level="WARNING", delay=True, rotation='1 hour')
+logger.add(logtail_handler, level="DEBUG")
 # Создание экземпляра бота с использованием токена (уникальный ключ для доступа к боту)
 bot = telebot.TeleBot("8598431910:AAG8zvIUEk7E0N3v1eeOV3kKCtQ8FN6fJM4")
 logger.success("Экземпляр бота создан")  # Логируем успешное создание бота
 
-m = types.Message # Создаём псевдоним для класса Message (используется для аннотации типов)
+m = types.Message  # Создаём псевдоним для класса Message (используется для аннотации типов)
 temp = {}
+
 
 # Декоратор, который регистрирует функцию-обработчик команды /start
 @bot.message_handler(['start'])
-def start(msg: m): # Функция принимает сообщение от пользователя
+def start(msg: m):  # Функция принимает сообщение от пользователя
     logger.info(f"Пользователь {msg.chat.id} нажал /start")  # Логируем действие пользователя по его ID
     old = db.db.s.get(db.Users, msg.chat.id)
     if not old:
@@ -26,6 +31,7 @@ def start(msg: m): # Функция принимает сообщение от �
         db.db.merge(user)
         db.db.commit()
     bot.send_message(msg.chat.id, "Пройти опрос — /lets_go")
+
 
 # Декоратор, который регистрирует функцию-обработчик команды /lets_go
 @bot.message_handler(['lets_go'])
@@ -42,6 +48,7 @@ def quest(msg: m):
             bot.send_message(msg.chat.id, text, parse_mode="HTML", reply_markup=keyboard)
 
     bot.register_next_step_handler(msg, first_question, ids)
+
 
 def first_question(msg: m, ids: list):
     if not msg.text.isnumeric():
@@ -65,6 +72,7 @@ def first_question(msg: m, ids: list):
     bot.send_message(msg.chat.id, questions[0])
     bot.register_next_step_handler(msg, next_question, questions)
 
+
 @logger.catch
 def next_question(msg: m, questions):
     global temp
@@ -83,6 +91,7 @@ def next_question(msg: m, questions):
     bot.send_message(msg.chat.id, question)
     bot.register_next_step_handler(msg, next_question, questions)
 
+
 def save_client(msg: m):
     user = db.db.s.get(db.Users, msg.chat.id)
     if user.answers is None:
@@ -92,7 +101,6 @@ def save_client(msg: m):
         answers.append(temp[msg.chat.id]['answers'])
     db.db.s.query(db.Users).filter_by(id=msg.chat.id).update({"answers": answers})
     db.db.commit()
-
 
 
 # Декоратор, который регистрирует функцию-обработчик команды /write
@@ -131,25 +139,20 @@ def admin(msg: m):
 
 # Функция отображения панели администратора
 def admin_panel(msg):
-    # Создаём клавиатуру с двумя рядами кнопок (True, True - автоизменяемый размер, одна клавиша на строку)
     kb = telebot.types.ReplyKeyboardMarkup(True, True)
 
-    # Добавляем кнопки в первый ряд
     kb.row('Посмотреть списки вопросов', 'Удалить список вопросов')
-    # Добавляем кнопку во второй ряд
-    kb.row('Добавить список вопросов')
+    kb.row('Добавить список вопросов', 'Посмотреть ответы')
 
-    # Отправляем сообщение с прикреплённой клавиатурой
     bot.send_message(msg.chat.id, "Выбери действие:", reply_markup=kb)
 
-    # Устанавливаем следующий обработчик для ответа пользователя
     bot.register_next_step_handler(msg, admin_panel_handler)
 
 
 # Обработчик выбора действия в панели администратора
 def admin_panel_handler(msg: m):
     # Проверяем, начинается ли текст с "Посмотреть"
-    if msg.text.startswith("Посмотреть"):
+    if msg.text.startswith("Посмотреть списки"):
         questions = check_questions()  # Получаем список всех вопросов
         bot.send_message(msg.chat.id, questions_format(questions),
                          parse_mode="HTML")  # Отправляем отформатированный список
@@ -159,6 +162,9 @@ def admin_panel_handler(msg: m):
     # Проверяем, начинается ли текст с "Добавить"
     elif msg.text.startswith("Добавить"):
         ask_question(msg)
+    # Проверяем, начинается ли текст с "Посмотреть ответы"
+    elif msg.text.startswith("Посмотреть ответы"):
+        view_answers(msg)
     else:
         # Если текст не соответствует ни одной кнопке - возвращаем в панель
         admin_panel(msg)
@@ -201,6 +207,7 @@ def questions_format(questions: list):
     logger.info("Строка отформатирована успешно")  # Логируем успешное форматирование
     return text  # Возвращаем готовый текст
 
+
 @logger.catch
 def delete_questions(msg: m):
     questions = check_questions()
@@ -218,6 +225,7 @@ def delete_questions(msg: m):
     bot.send_message(msg.chat.id, text, parse_mode="HTML", reply_markup=keyboard)
     bot.register_next_step_handler(msg, delete_questions_handler, ids)
 
+
 @logger.catch
 def delete_questions_handler(msg: m, ids: list):
     if not msg.text.isnumeric() or int(msg.text) not in ids:
@@ -233,6 +241,7 @@ def delete_questions_handler(msg: m, ids: list):
     bot.send_message(msg.chat.id, f"Вы точно хотите удалить список №{msg.text}?", reply_markup=keyboard)
     bot.register_next_step_handler(msg, delete, int(msg.text))
 
+
 @logger.catch
 def delete(msg: m, num: int):
     if msg.text == "УДАЛИТЬ":
@@ -245,6 +254,7 @@ def delete(msg: m, num: int):
         bot.send_message(msg.chat.id, "Удаление отменено.")
         admin_panel(msg)
 
+
 @logger.catch
 def ask_question(msg: m):
     global temp
@@ -252,6 +262,7 @@ def ask_question(msg: m):
     logger.success(f"Админ {msg.chat.id} добавил новый опрос")
     bot.send_message(msg.chat.id, "Введи первый вопрос:")
     bot.register_next_step_handler(msg, ask_next_question)
+
 
 @logger.catch
 def ask_next_question(msg: m):
@@ -267,7 +278,7 @@ def ask_next_question(msg: m):
 
 @logger.catch
 def obrabochik(msg: m):
-    num = len(check_questions())+1
+    num = len(check_questions()) + 1
     data = db.Manage(id=num, short_name=msg.text, questions=temp[msg.chat.id])
     db.db.merge(data)  # Добавляем/обновляем объект в сессии БД
     db.db.commit()  # Сохраняем изменения в БД (фиксируем транзакцию)
@@ -277,6 +288,74 @@ def obrabochik(msg: m):
     admin_panel(msg)
 
 
+@logger.catch
+def view_answers(msg: m):
+    # Получаем список всех вопросов для выбора
+    questions = check_questions()
+    if not questions:
+        bot.send_message(msg.chat.id, "Нет доступных опросов!")
+        admin_panel(msg)
+        return
+
+    ids = []
+    keyboard = types.ReplyKeyboardMarkup(True, True)
+    for q in questions:
+        ids.append(q[0])
+        keyboard.row(str(q[0]))
+
+    text = "Выберите опрос для просмотра ответов: \n"
+    for q in questions:
+        text += telebot.formatting.hbold(f"Номер {q[0]}. {q[1]} \n")
+
+    bot.send_message(msg.chat.id, text, parse_mode="HTML", reply_markup=keyboard)
+    bot.register_next_step_handler(msg, view_answers_handler, ids)
 
 
-bot.infinity_polling() # Запускаем бота в режиме бесконечного опроса (постоянно ждём сообщения)
+@logger.catch
+def view_answers_handler(msg: m, ids: list):
+    if not msg.text.isnumeric() or int(msg.text) not in ids:
+        logger.warning(f"Админ {msg.chat.id} ввёл неверный номер списка")
+        bot.send_message(msg.chat.id, "Введён неправильный номер списка")
+        admin_panel(msg)
+        return
+
+    list_id = int(msg.text)
+    users = db.db.s.query(db.Users).all()
+
+    respondents = []
+    for user in users:
+        if user.answers:
+            for answer_list in user.answers:
+                survey = db.db.s.get(db.Manage, list_id)
+                if survey and len(answer_list) == len(survey.questions):
+                    respondents.append({
+                        'user': user,
+                        'answers': answer_list
+                    })
+
+    if not respondents:
+        bot.send_message(msg.chat.id, f"На опрос №{list_id} пока никто не ответил.")
+        admin_panel(msg)
+        return
+
+    survey = db.db.s.get(db.Manage, list_id)
+    text = f"Ответы на опрос: {survey.short_name}\n\n"
+
+    for i, respondent in enumerate(respondents, 1):
+        user = respondent['user']
+        answers = respondent['answers']
+        text += f"{i}. {user.name} (ID: {user.id})\n"
+        for j, (question, answer) in enumerate(zip(survey.questions, answers), 1):
+            text += f"   Вопрос {j}: {answer}\n"
+        text += "\n"
+
+        if len(text) > 4000:
+            bot.send_message(msg.chat.id, text)
+            text = ""
+
+    if text:
+        bot.send_message(msg.chat.id, text)
+
+    admin_panel(msg)
+
+bot.infinity_polling()
