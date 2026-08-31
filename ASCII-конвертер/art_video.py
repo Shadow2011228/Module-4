@@ -6,10 +6,11 @@ from loguru import logger as log
 
 
 class ArtConverter:
-    def __init__(self, path='img/wolf.jpg', font_size=2, color='white', color_lvl=8):
+    def __init__(self, path='video/madagaskar.mp4', font_size=4, color='white', color_lvl=32):
         self.path = path
         pg.init()
         self.ASCII_CHARS = ' ixzao*MW&8%B@$#'
+        self.capture = cv2.VideoCapture(path)
         self.color_lvl = color_lvl
         self.font_size = font_size
         self.ASCII_COEFF = 255 // (len(self.ASCII_CHARS) - 1)
@@ -42,23 +43,25 @@ class ArtConverter:
             self.clock.tick()
 
     def get_image(self):
-        self.cv2_image = cv2.imread(self.path)
+        # self.cv2_image = cv2.imread(self.path)
+        ok, self.cv2_image = self.capture.read()
+        if not ok:
+            exit()
         transposed_image = cv2.transpose(self.cv2_image)
         gray_image = cv2.cvtColor(transposed_image, cv2.COLOR_BGR2GRAY)
         rgb_image = cv2.cvtColor(transposed_image, cv2.COLOR_BGR2RGB)
         return rgb_image, gray_image
 
     def draw_converted_image(self):
+        self.rgb_image, self.gray_image = self.get_image()
         char_indices = self.gray_image // self.ASCII_COEFF
         color_indices = self.rgb_image // self.COLOR_COEFF
-        for x in range(0, self.width, self.CHAR_STEP):
-            for y in range(0, self.height, self.CHAR_STEP):
-                char_index = char_indices[x, y]
-                if char_index:
-                    # self.screen.blit(self.RENDERED_ASCII_CHARS[char_index], (x, y))
-                    char = self.ASCII_CHARS[char_index]
-                    color = tuple(color_indices[x, y])
-                    self.screen.blit(self.PALETTE[char][color], (x, y))
+
+        values = conversion(self.rgb_image, self.gray_image, self.width,
+                            self.height, self.COLOR_COEFF, self.ASCII_COEFF, self.CHAR_STEP)
+        for char_index, color, pos in values:
+            char = self.ASCII_CHARS[char_index]
+            self.screen.blit(self.PALETTE[char][color], pos)
 
     def create_palette(self):
         colors, color_coeff = np.linspace(0, 255, num=self.color_lvl, dtype=int, retstep=True)
@@ -72,6 +75,17 @@ class ArtConverter:
                 char_palette[color_key] = self.font.render(char, False, tuple(color))
             palette[char] = char_palette
         return palette, color_coeff
+
+@njit(fastmath=True)
+def conversion(image, gray_image, width, height, color_coeff, ascii_coeff, step):
+    values = []
+    for x in range(0, width, step):
+        for y in range(0, height, step):
+            char_index = gray_image[x, y] // ascii_coeff
+            if char_index:
+                r, g, b = image[x, y] // color_coeff
+                values.append((char_index, (r, g, b), (x, y)))
+    return values
 
 
 if __name__ == '__main__':
