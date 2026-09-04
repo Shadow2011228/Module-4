@@ -19,11 +19,27 @@ class ArtConverter:
         # self.RENDERED_ASCII_CHARS = [self.font.render(char, False, color) for char in self.ASCII_CHARS]
         self.PALETTE, self.COLOR_COEFF = self.create_palette()
 
+
         self.rgb_image, self.gray_image = self.get_image()
         self.RES = self.width, self.height = self.gray_image.shape[0], self.gray_image.shape[1]
         self.screen = pg.display.set_mode(self.RES)
         self.clock = pg.time.Clock()
         log.debug(self.gray_image)
+        self.rec_fps = 60
+        self.record = False
+        self.recorder = cv2.VideoWriter('output/video.mp4', cv2.VideoWriter_fourcc(*'avc1'), self.rec_fps, self.RES)
+
+    def get_frame(self):
+        frame = pg.surfarray.array3d(self.screen)
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        frame = cv2.transpose(frame)
+        return frame
+
+    def record_frame(self):
+        if self.record:
+            frame = self.get_frame()
+            self.recorder.write(frame)
+            cv2.imshow('frame', frame)
 
 
     def draw(self):
@@ -37,6 +53,15 @@ class ArtConverter:
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     exit()
+                if event.type == pg.KEYDOWN:
+                    if event.key == pg.K_r:
+                        print(1)
+                        self.record = not self.record
+                    if event.key == pg.K_ESCAPE and self.record:
+                        print(2)
+                        self.record = not self.record
+                        cv2.destroyAllWindows()
+
             self.draw()
             pg.display.set_caption(str(self.clock.get_fps()))
             pg.display.flip()
