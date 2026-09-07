@@ -27,7 +27,7 @@ class ArtConverter:
         log.debug(self.gray_image)
         self.rec_fps = 60
         self.record = False
-        self.recorder = cv2.VideoWriter('output/video.mp4', cv2.VideoWriter_fourcc(*'avc1'), self.rec_fps, self.RES)
+        self.recorder = cv2.VideoWriter('output/video.mp4', cv2.VideoWriter_fourcc(*'mp4v'), self.rec_fps, self.RES)
 
     def get_frame(self):
         frame = pg.surfarray.array3d(self.screen)
@@ -57,12 +57,14 @@ class ArtConverter:
                     if event.key == pg.K_r:
                         print(1)
                         self.record = not self.record
-                    if event.key == pg.K_ESCAPE and self.record:
+                        print(self.record)
+                    if event.key == pg.K_ESCAPE and not self.record:
                         print(2)
-                        self.record = not self.record
+                        self.record = self.record
                         cv2.destroyAllWindows()
 
             self.draw()
+            self.record_frame()
             pg.display.set_caption(str(self.clock.get_fps()))
             pg.display.flip()
             self.clock.tick()

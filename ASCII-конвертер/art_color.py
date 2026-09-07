@@ -6,7 +6,7 @@ from loguru import logger as log
 
 
 class ArtConverter:
-    def __init__(self, path='img/wolf.jpg', font_size=2, color='white', color_lvl=8):
+    def __init__(self, path='img/wolf.jpg', font_size=2, color_lvl=8):
         self.path = path
         pg.init()
         self.ASCII_CHARS = ' ixzao*MW&8%B@$#'
@@ -74,9 +74,9 @@ class ArtConverter:
         return palette, color_coeff
 
 
-if __name__ == '__main__':
-    app = ArtConverter()
-    app.run()
+# if __name__ == '__main__':
+#     app = ArtConverter()
+#     app.run()
 
 
 
