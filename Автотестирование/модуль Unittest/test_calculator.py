@@ -42,4 +42,44 @@ class CalcTest(unittest.TestCase):
         self.assertEqual(app.calc("-2 / -1"), 2.0)
 
 
+class InputTest(unittest.TestCase):
+    def test_input_available(self):
+        app = Calculator()
+        try:
+            app.input("1 + 1")
+        except AttributeError:
+            self.fail("Функции input не существует!")
+
+    def test_input_valid(self):
+        app = Calculator()
+
+        self.assertEqual(app.input("1 + 1"), [1, '+', 1])
+        self.assertEqual(app.input("-1 - 1"), [-1, '-', 1])
+        self.assertEqual(app.input("1 * -1"), [1, '*', -1])
+        self.assertEqual(app.input("-1 / -1"), [-1, '/', -1])
+
+    def test_input_invalid(self):
+        app = Calculator()
+
+        with self.assertRaises(ValueError):
+            app.input("1 3")
+        with self.assertRaises(ValueError):
+            app.input("1.2 + 3")
+        with self.assertRaises(ValueError):
+            app.input("1 j 3")
+        with self.assertRaises(ValueError):
+            app.input("1.2 + 3.5")
+
+        with self.assertRaises(ValueError):
+            app.input("1.2 3.5")
+        with self.assertRaises(ValueError):
+            app.input("1.2 3.5 + 23")
+        with self.assertRaises(ValueError):
+            app.input("12 35 + 23")
+        with self.assertRaises(ValueError):
+            app.input("f + f")
+
+
+
+
 
