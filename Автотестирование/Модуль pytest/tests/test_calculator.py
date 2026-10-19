@@ -11,7 +11,11 @@ class TestCalculation:
         (-2, -1, 2.0, does_not_raise()),  #/
         (25, 5, 5.0, does_not_raise()),
         (10, 0, 0, pytest.raises(ZeroDivisionError)),
-        ('hello', 3, 5, pytest.raises(ValueError))
+        ('hello', 3, 5, pytest.raises(ValueError)),
+        (1, 'hello', 5, pytest.raises(ValueError)),
+        ('hello', 'hello', 'hello', pytest.raises(ValueError)),
+        (2, 1, 1, pytest.raises(AssertionError)),
+        ('hello', 1, 'hello', pytest.raises(ValueError)),
     ])
     def test_division_valid(self, a, b, result, expectation): # Функция тестирования
         c = Calculator()
@@ -23,7 +27,11 @@ class TestCalculation:
         (2, -1, -2, does_not_raise()),  # } разлчиные связки аргументов для теста
         (-2, -1, 2, does_not_raise()),  #/
         (25, 5, 125, does_not_raise()),
-        ('hello', 3, 5, pytest.raises(ValueError))
+        ('hello', 3, 5, pytest.raises(ValueError)),
+        (1, 'hello', 5, pytest.raises(ValueError)),
+        ('hello', 'hello', 'hello', pytest.raises(ValueError)),
+        (2, 1, 1, pytest.raises(AssertionError)),
+        ('hello', 1, 'hello', pytest.raises(ValueError)),
     ])
     def test_mult_valid(self, a, b, result, expectation):  # Функция тестирования
         c = Calculator()
@@ -35,7 +43,11 @@ class TestCalculation:
         (2, -1, 3, does_not_raise()),  # } разлчиные связки аргументов для теста
         (2, 0, 2, does_not_raise()),  #/
         (-2, -1, -1, does_not_raise()),
-        ('hello', 3, 5, pytest.raises(ValueError))
+        ('hello', 3, 5, pytest.raises(ValueError)),
+        (1, 'hello', 5, pytest.raises(ValueError)),
+        ('hello', 'hello', 'hello', pytest.raises(ValueError)),
+        (2, 1, 2, pytest.raises(AssertionError)),
+        ('hello', 1, 'hello', pytest.raises(ValueError)),
     ])
     def test_diff_valid(self, a, b, result, expectation):
         c = Calculator()
@@ -47,7 +59,11 @@ class TestCalculation:
         (1, -3, -2, does_not_raise()),  # } разлчиные связки аргументов для теста
         (1, 0, 1, does_not_raise()),  # /
         (-2, -3, -5, does_not_raise()),
-        ('hello', 3, 5, pytest.raises(ValueError))
+        ('hello', 3, 5, pytest.raises(ValueError)),
+        (1, 'hello', 5, pytest.raises(ValueError)),
+        ('hello', 'hello', 'hello', pytest.raises(ValueError)),
+        (2, 1, 1, pytest.raises(AssertionError)),
+        ('hello', 1, 'hello', pytest.raises(ValueError)),
     ])
     def test_summ_valid(self, a, b, result, expectation):
         c = Calculator()
